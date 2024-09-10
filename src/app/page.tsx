@@ -1,101 +1,159 @@
-import Image from "next/image";
+"use client";
+
+import {
+  FlagIcon,
+  MagnifyingGlassIcon,
+  MapPinIcon,
+  UserIcon,
+} from "@heroicons/react/24/outline";
+import { useRouter } from "next/navigation";
+import { FieldValues, useForm } from "react-hook-form";
+import Button from "../components/Button";
+import Carousel from "../components/Carousel";
+import CollectionCard from "../components/CollectionCard";
+import { collections } from "../moks";
+import { useQueryParams } from "../utils/hooks";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const router = useRouter();
+  const { query, clear } = useQueryParams();
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+  const { register, handleSubmit, setValue } = useForm();
+
+  const onSubmit = (data: FieldValues) => {
+    const params = new URLSearchParams(window.location.search);
+
+    if (data.spot) {
+      params.set("spot", data.spot);
+    } else {
+      params.delete("spot");
+    }
+
+    if (data.creator) {
+      params.set("creator", data.creator);
+    } else {
+      params.delete("creator");
+    }
+
+    if (data.date) {
+      params.set("date", data.date);
+    } else {
+      params.delete("date");
+    }
+
+    // Update the URL with all query params at once
+    router.push(`${window.location.pathname}?${params.toString()}`, undefined);
+  };
+
+  // Retrieve the query parameters from the URL
+  const spotQuery = query("spot") || "";
+  const creatorQuery = query("creator") || "";
+  const dateQuery = query("date") || "";
+
+  const isFiltersActive = spotQuery || creatorQuery || dateQuery;
+
+  // Filter collections based on the query parameters
+  const filteredCollections = collections.filter((collection) => {
+    const matchesSpot = spotQuery ? collection.spot.includes(spotQuery) : true;
+    const matchesCreator = creatorQuery
+      ? collection.creator.includes(creatorQuery)
+      : true;
+    const matchesDate = dateQuery ? collection.day === dateQuery : true;
+
+    return matchesSpot && matchesCreator && matchesDate;
+  });
+
+  const clearFilters = () => {
+    setValue("spot", "");
+    setValue("creator", "");
+    setValue("date", "");
+
+    clear();
+  };
+
+  return (
+    <div className="min-h-screen p-8 flex flex-col gap-y-10">
+      <div>
+        <h1 className="text-3xl mb-3">Last Update</h1>
+        <Carousel />
+      </div>
+      <div>
+        <div className="flex items-center mb-5 justify-between">
+          <h1 className="text-3xl font-bold">Sessions</h1>
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="flex items-center gap-x-5"
           >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            <label className="input input-bordered flex items-center gap-2">
+              <MapPinIcon width={20} />
+              <input
+                {...register("spot")}
+                type="text"
+                className="grow"
+                placeholder="Spot"
+              />
+            </label>
+            <label className="input input-bordered flex items-center gap-2">
+              <UserIcon width={20} />
+              <input
+                {...register("creator")}
+                type="text"
+                className="grow"
+                placeholder="Creator"
+              />
+            </label>
+            <label className="input input-bordered flex items-center gap-2">
+              <input
+                {...register("date")}
+                type="date"
+                className="grow"
+                placeholder="Date"
+              />
+            </label>
+            <Button type="submit" className="w-32">
+              Search{" "}
+              <span>
+                <MagnifyingGlassIcon width={20} />
+              </span>
+            </Button>
+            <Button
+              type="button"
+              variant={"secondary"}
+              className="w-32"
+              onClick={clearFilters}
+              disabled={!isFiltersActive}
+            >
+              Reset
+            </Button>
+          </form>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        <div className="grid grid-cols-4 gap-5">
+          {filteredCollections.length > 0 ? (
+            filteredCollections.map((collection) => (
+              <div key={collection.id} className="cursor-pointer">
+                <CollectionCard
+                  imageSrc={collection.src}
+                  imageAlt={collection.title}
+                  spot={collection.spot}
+                  day={collection.day}
+                  creator={collection.creator}
+                  picture={collection.collectionData.length}
+                  buttonText="View Collection"
+                  className="w-[100%]"
+                  onButtonClick={() =>
+                    router.push(`/collection/${collection.id}`)
+                  }
+                />
+              </div>
+            ))
+          ) : (
+            <p className="text-3xl font-bold col-span-full mt-10 flex items-center gap-x-2">
+              No collections match the filters
+              <FlagIcon width={36} />
+            </p>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
